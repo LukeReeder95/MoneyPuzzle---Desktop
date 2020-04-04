@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<!--<html manifest="/cache.manifest">-->
+<head>
+    <title>Monkeypuzzle</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css" >
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cytoscape-context-menus.css') }}" type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.qtip.min.css') }}" type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/monkeypuzzle.css') }}" type="text/css"/>
+</head>
+<body>
+
+    <!-- Slidein Panel: START -->
+    <nav id="menu" class="menu">
+    <a href="http://arg.napier.ac.uk/monkeypuzzle/" target="_blank">
+        <header class="menu-header">
+          <span class="menu-header-title">MonkeyPuzzle</span>
+        </header>
+    </a>
+
+    <section class="menu-section">
+        <h3 class="menu-section-title">Interface</h3>
+        <ul class="menu-section-list">            
+           <li> <a href="#" id="toggle_resources"><button class="btn btn-default" onclick="toggle_resource_pane()" title="Toggle the visibility of the resources pane">Toggle Resource Pane</button></a></li>
+            <li><a href="#" id="clear_storage_button"><button class="btn btn-danger" onclick="$('#confirm_reset_modal').modal('show');" title="Reset MonkeyPuzzle to her initial state">Reset</button></a></li>
+            <li><a href="#" id="load_demo_argument_button"><button class="btn btn-default" onclick="load_demo_argument()" title="Load a demonstration SADFace document into MonkeyPuzzle">Load Demo</button></a></li>
+            <li><div style="margin-left: 20px; margin-right: 60px;"><textarea id="analyst_name_textarea" type="text" rows="1" cols="20" maxlength="40" style="resize: none;" class="form-control"  placeholder="Name" title="Type your name here..." onchange="set_analyst_name();"></textarea></div></li>
+            <li><div style="margin-left: 20px; margin-right: 60px;"><textarea id="analyst_email_textarea" type="text" rows="1" cols="20" maxlength="40" style="resize: none;" class="form-control"  placeholder="Email" title="Type your email address here..." onchange="set_analyst_email();"></textarea></div></li>
+      </ul>
+      </section>
+
+
+    <section class="menu-section">
+        <h3 class="menu-section-title">Export</h3>
+        <ul class="menu-section-list">
+            <!-- <li><div style="margin-left: 20px; margin-right: 60px;"><textarea id="export_filename" type="text" rows="1" cols="20" maxlength="20" style="resize: none;" class="form-control"  placeholder="Filename" title="The name for the exported file"></textarea></div></li> -->
+
+            <li><a href="#" id="export_button"><button class="btn btn-default" onclick="download_sadface()" title="Export the current analysis to a SADFace formatted JSON document">SADFace</button></a></li>
+            <li><a href="#" target="_blank" id="download_png"><button class="btn btn-default" title="Export the current analysis to a PNG image" onclick="download_png()">PNG</button></a></li>
+            <li><a href="#" target="_blank" id="download_jpg"><button class="btn btn-default" title="Export the current analysis to a JPG image" onclick="download_jpg()">JPG</button></a></li>
+      </ul>
+      </section>
+      
+    <section class="menu-section">
+        <h3 class="menu-section-title">Import</h3>
+        <ul class="menu-section-list">
+			<span class="upload-span">
+				<a rel="ignore">
+					<div display="inline-block">
+						<input id="loadJSON" style="display:none;" accept=".json" role="button" tabindex="-1000" type="file" class="upload-button" onchange="filemanager('load','json',null,null,null)">
+                        <input type="button" class="btn btn-default" value="SADFace" onclick="document.getElementById('loadJSON').click();" title="Load a SADFace formatted JSON document into MonkeyPuzzle"/>
+					</div>
+				</a>
+			</span>
+			
+        </ul>
+    </section>
+	
+    <section class="menu-section">
+        <h3 class="menu-section-title">Documentation</h3>
+        <ul class="menu-section-list">            
+            <a href="http://arg.napier.ac.uk/page/project/monkeypuzzle/" id="a">About MonkeyPuzzle</a>
+            <a href="http://arg.napier.ac.uk/page/project/monkeypuzzle/quickstart/" id="a">Quick-start</a>
+            <a href="https://github.com/ARG-ENU/monkeypuzzle_web" id="a">Code Repository</a>
+            <a href="https://github.com/ARG-ENU/monkeypuzzle_web/issues" id="a">Issue Tracker</a>
+            <a href="https://github.com/ARG-ENU/monkeypuzzle_web/blob/master/LICENSE" id="a">Licensing</a>
+      </ul>
+      </section>
+    </nav>
+    <!-- Slidein Panel: END -->
+
+
+    <!-- Main UI: START -->
+
+    <main id="panel" class="panel">
+    <div class="ui-container">
+        <div class="resource-pane" id="resource-pane">
+            <div class="resource_pane_tab_head" id="resource_pane_tab_head">
+                <button id="add_tab_button" class="add_tab_button" onclick="$('#resource_pane_selection_modal').modal('show');"> 
+                    <i class="fa fa-plus-square fa-lg" style="color: #cbc5c1;"></i>
+                </button>
+            </div>
+            <div class="tab_body" id="tab_body"></div>        
+        </div>
+
+        <div class="splitter" id="splitter">
+        </div>
+
+        <div class="visualisation-pane">
+            <div id="navbar">
+                <button class="btn-hamburger toggle-button">
+                <i class="fa fa-bars fa-fw fa-lg" style="color: #cbc5c1;"></i>
+                </button>
+            </div>
+            <div id="cy" ondrop="drop_handler(event);" ondragover="dragover_handler(event);"></div>
+        </div>
+    </div>
+    </main>
+
+    <!-- Main UI: END -->
+
+
+    <!-- New Atom Modal -->
+
+    <div class="modal fade" id="newAtomModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">New Atom</h4>
+            </div>
+            <div class="modal-body">
+                <p>Add some content to the new atom</p>
+                 <div class="form-group">
+                    <textarea class="form-control" rows="2" id="new_atom_content"></textarea>
+                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="new_atom_modal()">Create</button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+
+<!--
+    New Scheme Modal
+-->
+    <div class="modal fade" id="newSchemeModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">New Scheme</h4>
+            </div>
+            <div class="modal-body">
+                <p>Select a scheme</p>
+                <select class="form-control" id="sel1">
+                    <option>Support</option>
+                    <option>Conflict</option>
+                    <option>Argument from Sign</option>
+					<option>Argument from an Exceptional Case</option>
+					<option>Argument from Analogy</option>
+					<option>Argument from Bias</option>
+					<option>Argument from Cause to Effect</option>
+					<option>Argument from Correlation to Causes</option>
+					<option>Argument from Established Rule</option>
+					<option>Argument from Evidence to a Hypothesis</option>
+					<option>Argument from Falsification to a Hypothesis</option>
+					<option>Argument from Example</option>
+					<option>Argument from Commitment</option>
+					<option>Circumstantial Argument Against the Person</option>
+					<option>Argument from Popular Practice</option>
+					<option>Argument from Popularity</option>
+					<option>Argument from Position to Know</option>
+					<option>Argument from Expert Opinion</option>
+					<option>Argument from Precedent</option>
+					<option>Argument from Consequences</option>
+					<option>Argument from Waste</option>
+                    <option>Causal Slippery Slope Argument</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="add_new_scheme_node()">Create</button>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+<!--
+    Edit Content Modal
+-->
+
+	    <div class="modal fade" id="editContentModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Content</h4>
+            </div>
+            <div class="modal-body">
+                <p>Edit atom content</p>
+                 <div class="form-group">
+                    <textarea class="form-control" rows="2" id="edit_atom_content"></textarea>
+                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="edit_atom_content()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<!--
+    Edit Metadata Modal
+-->
+
+    <div class="modal fade" id="editMetadataModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Metadata</h4>
+            </div>
+            <div class="modal-body">
+             <p>Edit atom content</p>
+                 <div class="form-group" id="edit_metadata">
+                 
+                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="edit_atom_metadata()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+	  
+<!--
+    Edit Scheme Type Modal
+-->
+
+    <div class="modal fade" id="editSchemeModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Scheme</h4>
+            </div>
+			<div class="modal-body">
+                <p>Select a scheme</p>
+                <select class="form-control" id="sel2">
+                    <option>Support</option>
+                    <option>Conflict</option>
+                    <option>Argument from Sign</option>
+					<option>Argument from an Exceptional Case</option>
+					<option>Argument from Analogy</option>
+					<option>Argument from Bias</option>
+					<option>Argument from Cause to Effect</option>
+					<option>Argument from Correlation to Causes</option>
+					<option>Argument from Established Rule</option>
+					<option>Argument from Evidence to a Hypothesis</option>
+					<option>Argument from Falsification to a Hypothesis</option>
+					<option>Argument from Example</option>
+					<option>Argument from Commitment</option>
+					<option>Circumstantial Argument Against the Person</option>
+					<option>Argument from Popular Practice</option>
+					<option>Argument from Popularity</option>
+					<option>Argument from Position to Know</option>
+					<option>Argument from Expert Opinion</option>
+					<option>Argument from Precedent</option>
+					<option>Argument from Consequences</option>
+					<option>Argument from Waste</option>
+                    <option>Causal Slippery Slope Argument</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="edit_scheme_content()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+<!--
+    New Resource Pane Type Selection Modal
+-->
+
+    <div class="modal fade" id="resource_pane_selection_modal" role="dialog" tabindex='-1'>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">New Resource Pane</h4>
+            </div>
+			<div class="modal-body">
+                <p>Select a resource type</p>
+                <select class="form-control" id="resource_type">
+                    <option>Text</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="add_tab();">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+<!-- 
+    Reset Confirmation Modal 
+-->
+
+    <div class="modal fade" id="confirm_reset_modal" role="dialog" tabindex='-1'>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Reset MonkeyPuzzle</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure that you want to reset MonkeyPuzzle?<br /> This will empty the current analysis and adjust all options back to their initial settings.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="mp_reset()">Reset</button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+<!-- 
+    Help Modal 
+-->
+
+    <div class="modal fade" id="help_modal" role="dialog" tabindex='-1'>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Help</h4>
+            </div>
+            <div class="modal-body">
+                <p>MonkeyPuzzle uses a 3 pane layout. The visualisation pane is in the center, the resource pane is to the left, and the application menu is to the right.</p>
+                <p>Keybord Shortcuts:</p>
+                <ul>
+                    <li><b>a - </b>Create a new atom</li>
+                    <li><b>d - </b>Delete the selected node</li>
+                    <li><b>h - </b>Display this delightfully helpful modal</li>
+                    <li><b>m - </b>Toggle display of the menu</li>
+                    <li><b>r - </b>Toggle display of the resource pane</li>
+                    <li><b>Cmd/Ctrl-z - </b>Undo</li>
+                    <li><b>Cmd/Ctrl-y - </b>Redo</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Dismiss</button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+
+	  
+<!--
+    JS Libraries
+-->
+    <script src="static/js/lib/jquery.min.js"></script>
+    <script src="static/js/lib/jquery-resizable.js"></script>
+    <script src="static/js/lib/jquery.qtip.min.js"></script>
+    <script src="static/js/lib/bootstrap.min.js"></script>
+    <script src="static/js/lib/cola.js"></script>
+    <script src="static/js/lib/lodash.min.js"></script>
+    <script src='static/js/lib/cytoscape.min.js'></script>
+    <script src="static/js/lib/cytoscape-cola.js"></script>
+    <script src="static/js/lib/cytoscape-edgehandles.js"></script> 
+    <script src="static/js/lib/cytoscape-qtip.js"></script>
+    <script src="static/js/lib/cytoscape-context-menus.js"></script>    
+    <script src="static/js/lib/mousetrap.min.js"></script>
+    <script src="static/js/lib/slideout.js"></script>
+    
+	<script src="static/js/sadface.js"></script>
+    <script src="static/js/modal_dialogs.js"></script>
+    <script src="static/js/resourcepane.js"></script>
+    <script src="static/js/resourcepane_text.js"></script>
+    <script src="static/js/menu.js"></script>
+    <script src="static/js/keyboard.js"></script>
+	<script src="static/js/filemanager.js"></script>
+    <script src="static/js/monkeypuzzle.js"></script>
+
+</body>
+</html>
