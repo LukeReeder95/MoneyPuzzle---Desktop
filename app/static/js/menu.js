@@ -28,9 +28,13 @@ function download_png()
     // var filename = document.getElementById("export_filename").value;
     // if(filename.length == 0){ filename = "default"}
     // filename+=".png";
+    // console.log(window.cy.png({ output: 'base64' }));
+    // var link = document.getElementById("download_png");
+    // link.download = filename;
     
-    var link = document.getElementById("download_png");
-    link.download = filename;
+    download(window.cy.png({ output: 'base64' }), "png");
+    return false;
+    
 }
 
 function download_jpg()
@@ -39,8 +43,10 @@ function download_jpg()
     // if(filename.length == 0){ filename = "default"}
     // filename+=".jpg";
     
-    var link = document.getElementById("download_jpg");
-    link.download = filename;
+    // var link = document.getElementById("download_jpg");
+    // link.download = filename;
+    download(window.cy.jpg({ output: 'base64' }), "jpg");
+    return false;
 }
 
 function load_demo_argument()

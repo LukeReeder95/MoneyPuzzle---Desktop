@@ -352,12 +352,13 @@ function initCytoscape() {
 
     cy.on("layoutstop", function(){
         running = false;
-        
-        var png = cy.png({ full: true });
-        $('#download_png').attr('href', png);
+        console.log("layout stopped")
 
-        var jpg = cy.jpg({ full: true });
-        $('#download_jpg').attr('href', jpg);
+        // var png = cy.png({ full: true, output: "base64" });
+        // $('#download_png').attr('href', png);
+        
+        // var jpg = cy.jpg({ full: true, output: "base64"  });
+        // $('#download_jpg').attr('href', jpg);
     });
 
     $(".resource-pane").resizable({
@@ -673,6 +674,11 @@ function redraw_visualisation() {
     cy.resize();
 }
 
+$(window).resize(function (event) {
+    console.log("Resize detected");
+    redraw_visualisation();
+});
+
 function mp_reset()
 {
     clear_local_storage();
@@ -689,4 +695,6 @@ function set_analyst_email()
     analyst_email = document.getElementById('analyst_email_textarea').value;
     update_analyst_email(analyst_email);
 }
+
+
 

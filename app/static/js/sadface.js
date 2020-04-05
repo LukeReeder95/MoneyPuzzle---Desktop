@@ -792,21 +792,21 @@ function now() {
     return d.toISOString().split(".")[0];
 }
 
-function prettyprint(doc) {
-    /*
-    Print nicely formatted output of the passed in string or
-    otherwise the SADFace document encoded as a String
+// function prettyprint(doc) {
+//     /*
+//     Print nicely formatted output of the passed in string or
+//     otherwise the SADFace document encoded as a String
 
-    Returns: A String
-    */
-    var string;
-    if (doc !== null || doc !== undefined) {
-        string = sd;
-    } else {
-        string = doc;
-    }
-    return JSON.stringify(string, null, 2);
-}
+//     Returns: A String
+//     */
+//     var string;
+//     if (doc !== null || doc !== undefined) {
+//         string = sd;
+//     } else {
+//         string = doc;
+//     }
+//     return JSON.stringify(string, null, 2);
+// }
 
 function saveSADFace(filename, filetype) {
     /*
@@ -826,10 +826,10 @@ function saveSADFace(filename, filetype) {
         text = JSON.parse(export_cytoscape(null));
     } else {
         f += ".json";
-        // text = prettyprint(JSON.parse(export_cytoscape(null)));
+        //text = prettyprint(JSON.parse(export_cytoscape(null)));
         text = JSON.stringify(sd, null, 2);
     }
-    download(f, text);
+    download(text, filetype);
 }
 
 function loadSADFace(file) {
@@ -844,11 +844,11 @@ function loadSADFace(file) {
     }
 }
 
-function download(filename, text) {
+function download(text, filetype) {
     /*
     Downloads a file given its filename and its text using utf-8 charset
     */
-    console.log("Downloading " + filename);
+    // console.log("Downloading " + filename);
     // var outfile = document.createElement("a");
     // outfile.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
     // outfile.setAttribute("download", filename);
@@ -860,7 +860,7 @@ function download(filename, text) {
     $.ajax({
         type: "POST",
         url: "/savefile",
-        data: text,
+        data: JSON.stringify({filetype:filetype, data:text}),
         contentType: "application/json; charset=utf-8", //data type sending to the server
         dataType: "json",
         success: function (data) {
